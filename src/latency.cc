@@ -12,8 +12,14 @@
 #include "callbacks.h"
 #include "descriptor_parser.h"
 
-#define BUTTON_PIN 2
-#define TOTAL_SAMPLES 3000
+#define BUTTON_PIN 26
+#define TOTAL_SAMPLES 10000
+
+#define USE_ADAFRUIT_FEATHER_RP2040_USBHOST 1
+
+#if 1==USE_ADAFRUIT_FEATHER_RP2040_USBHOST
+#define ENABLE_5V 18
+#endif
 
 volatile bool device_connected = false;
 volatile uint64_t last_sof_us = 0;
@@ -29,7 +35,7 @@ void core1_entry() {
     uint32_t us_within_frame = 0;
     uint32_t waiting_for_input = false;
     uint64_t toggle_button_at_us = 0;
-    bool button_state = true;
+    bool button_state = false;
     bool toggle_scheduled = false;
 
     gpio_init(BUTTON_PIN);
@@ -49,7 +55,7 @@ void core1_entry() {
                 }
                 us_within_frame = samples_left % 1000;
                 toggle_button_at_us = last_sof_us + 10000 + 1000 * (samples_left % 10) + us_within_frame;
-                printf("%lu ", us_within_frame);
+                // printf("%lu ", us_within_frame);
                 toggle_scheduled = true;
             }
         }
@@ -64,11 +70,12 @@ void core1_entry() {
 
         if (waiting_for_input && input_happened) {
             total_latency += now - toggle_button_at_us;
-            printf("%llu\n", now - toggle_button_at_us - 1000 + us_within_frame);
+            // printf("%llu\n", now - toggle_button_at_us - 1000 + us_within_frame);
+            printf("%llu\n", now - toggle_button_at_us);
             input_happened = false;
             waiting_for_input = false;
             if (samples_left == 0) {
-                printf("# average latency: %lluus\n", total_latency / TOTAL_SAMPLES);
+                // printf("# average latency: %lluus\n", total_latency / TOTAL_SAMPLES);
             }
         }
 
@@ -80,6 +87,15 @@ void core1_entry() {
 }
 
 int main() {
+
+    // USE_ADAFRUIT_FEATHER_RP2040_USBHOST - Enable 5V Pin
+    if(USE_ADAFRUIT_FEATHER_RP2040_USBHOST == 1) {
+
+        gpio_init(ENABLE_5V);
+        gpio_set_dir(ENABLE_5V, GPIO_OUT);
+        gpio_put(ENABLE_5V, true);
+    };
+
     board_init();
     tusb_init();
     stdio_init_all();

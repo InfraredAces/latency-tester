@@ -46,7 +46,7 @@ add_executable(latency_pio
 )
 pico_enable_stdio_usb(latency_pio 1)
 pico_enable_stdio_uart(latency_pio 0)
-target_compile_definitions(latency_pio PUBLIC PICO_DEFAULT_PIO_USB_DP_PIN=0)
+target_compile_definitions(latency_pio PUBLIC PICO_DEFAULT_PIO_USB_DP_PIN=16)
 target_include_directories(latency_pio PRIVATE
     src
     src/tusb_config_both
